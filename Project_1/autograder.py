@@ -290,8 +290,8 @@ def evaluate(generateSolutions, testRoot, moduleDict, exceptionMap=ERROR_HINT_MA
 
         # load test cases into question
         tests = [t for t in os.listdir(
-            subdir_path) if re.match('[^#~.].*\.test\Z', t)]
-        tests = [re.match('(.*)\.test\Z', t).group(1) for t in tests]
+            subdir_path) if re.match(r'[^#~.].*\.test\Z', t)]
+        tests = [re.match(r'(.*)\.test\Z', t).group(1) for t in tests]
         for t in sorted(tests):
             test_file = os.path.join(subdir_path, '%s.test' % t)
             solution_file = os.path.join(subdir_path, '%s.solution' % t)
@@ -382,8 +382,8 @@ def generatePublicTests(moduleDict, privateRoot='private_test_cases', publicRoot
         questionClass = getattr(testClasses, questionDict['class'])
         question = questionClass(questionDict, getDisplay(False))
 
-        tests = list(filter(lambda t: re.match('[^#~.].*\.test\Z', t), os.listdir(private_subdir_path)))
-        tests = list(map(lambda t: re.match('(.*)\.test\Z', t).group(1), tests))
+        tests = list(filter(lambda t: re.match(r'[^#~.].*\.test\Z', t), os.listdir(private_subdir_path)))
+        tests = list(map(lambda t: re.match(r'(.*)\.test\Z', t).group(1), tests))
         for t in sorted(tests):
             test_file = os.path.join(private_subdir_path, '%s.test' % t)
             public_test_file = os.path.join(public_subdir_path, '%s.test' % t)
@@ -417,10 +417,10 @@ if __name__ == '__main__':
 
     moduleDict = {}
     for cp in codePaths:
-        moduleName = re.match('.*?([^/]*)\.py', cp).group(1)
+        moduleName = re.match(r'.*?([^/]*)\.py', cp).group(1)
         moduleDict[moduleName] = loadModuleFile(moduleName, os.path.join(options.codeRoot, cp))
         
-    moduleName = re.match('.*?([^/]*)\.py', options.testCaseCode).group(1)
+    moduleName = re.match(r'.*?([^/]*)\.py', options.testCaseCode).group(1)
     moduleDict['projectTestClasses'] = loadModuleFile(moduleName, os.path.join(options.codeRoot, options.testCaseCode))
     
     # BEGIN SOLUTION NO PROMPT
