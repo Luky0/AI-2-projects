@@ -13,8 +13,9 @@
 
 
 # imports from python standard library
+from __future__ import print_function
 import grading
-import imp
+import importlib
 import optparse
 import os
 import re
@@ -22,71 +23,71 @@ import sys
 import projectParams
 import random
 random.seed(0)
-try: 
+try:
     from pacman import GameState
 except:
     pass
 
 # register arguments and set default values
 def readCommand(argv):
-    parser = optparse.OptionParser(description = 'Run public tests on student code')
+    parser = optparse.OptionParser(description='Run public tests on student code')
     parser.set_defaults(generateSolutions=False, edxOutput=False, gsOutput=False, muteOutput=False, printTestCase=False, noGraphics=False)
     # BEGIN SOLUTION NO PROMPT
     parser.set_defaults(generatePublicTests=False)
     # END SOLUTION NO PROMPT
     parser.add_option('--test-directory',
-                      dest = 'testRoot',
-                      default = 'test_cases',
-                      help = 'Root test directory which contains subdirectories corresponding to each question')
+                      dest='testRoot',
+                      default='test_cases',
+                      help='Root test directory which contains subdirectories corresponding to each question')
     parser.add_option('--student-code',
-                      dest = 'studentCode',
-                      default = projectParams.STUDENT_CODE_DEFAULT,
-                      help = 'comma separated list of student code files')
+                      dest='studentCode',
+                      default=projectParams.STUDENT_CODE_DEFAULT,
+                      help='comma separated list of student code files')
     parser.add_option('--code-directory',
-                    dest = 'codeRoot',
-                    default = "",
-                    help = 'Root directory containing the student and testClass code')
+                      dest='codeRoot',
+                      default="",
+                      help='Root directory containing the student and testClass code')
     parser.add_option('--test-case-code',
-                      dest = 'testCaseCode',
-                      default = projectParams.PROJECT_TEST_CLASSES,
-                      help = 'class containing testClass classes for this project')
+                      dest='testCaseCode',
+                      default=projectParams.PROJECT_TEST_CLASSES,
+                      help='class containing testClass classes for this project')
     parser.add_option('--generate-solutions',
-                      dest = 'generateSolutions',
-                      action = 'store_true',
-                      help = 'Write solutions generated to .solution file')
+                      dest='generateSolutions',
+                      action='store_true',
+                      help='Write solutions generated to .solution file')
     parser.add_option('--edx-output',
-                    dest = 'edxOutput',
-                    action = 'store_true',
-                    help = 'Generate edX output files')
+                      dest='edxOutput',
+                      action='store_true',
+                      help='Generate edX output files')
     parser.add_option('--gradescope-output',
-                    dest = 'gsOutput',
-                    action = 'store_true',
-                    help = 'Generate GradeScope output files')
+                      dest='gsOutput',
+                      action='store_true',
+                      help='Generate GradeScope output files')
     parser.add_option('--mute',
-                    dest = 'muteOutput',
-                    action = 'store_true',
-                    help = 'Mute output from executing tests')
+                      dest='muteOutput',
+                      action='store_true',
+                      help='Mute output from executing tests')
     parser.add_option('--print-tests', '-p',
-                    dest = 'printTestCase',
-                    action = 'store_true',
-                    help = 'Print each test case before running them.')
+                      dest='printTestCase',
+                      action='store_true',
+                      help='Print each test case before running them.')
     parser.add_option('--test', '-t',
-                      dest = 'runTest',
-                      default = None,
-                      help = 'Run one particular test.  Relative to test root.')
+                      dest='runTest',
+                      default=None,
+                      help='Run one particular test.  Relative to test root.')
     parser.add_option('--question', '-q',
-                    dest = 'gradeQuestion',
-                    default = None,
-                    help = 'Grade one particular question.')
+                      dest='gradeQuestion',
+                      default=None,
+                      help='Grade one particular question.')
     parser.add_option('--no-graphics',
-                    dest = 'noGraphics',
-                    action = 'store_true',
-                    help = 'No graphics display for pacman games.')
+                      dest='noGraphics',
+                      action='store_true',
+                      help='No graphics display for pacman games.')
     # BEGIN SOLUTION NO PROMPT
     parser.add_option('--generate-public-tests',
-                    dest = 'generatePublicTests',
-                    action = 'store_true',
-                    help = 'Generate ./test_cases/* from ./private_test_cases/*')
+                    dest='generatePublicTests',
+                    action='store_true',
+                    help='Generate ./test_cases/* from ./private_test_cases/*')
     # END SOLUTION NO PROMPT
     (options, args) = parser.parse_args(argv)
     return options
@@ -116,34 +117,42 @@ def setModuleName(module, filename):
 
     for i in dir(module):
         o = getattr(module, i)
-        if hasattr(o, '__file__'): continue
+        if hasattr(o, '__file__'):
+            continue
 
         if type(o) == functionType:
             setattr(o, '__file__', filename)
         elif type(o) == classType:
             setattr(o, '__file__', filename)
             # TODO: assign member __file__'s?
-        #print i, type(o)
+        #print(i, type(o))
 
 
 #from cStringIO import StringIO
 
-def loadModuleString(moduleSource):
-    # Below broken, imp doesn't believe its being passed a file:
-    #    ValueError: load_module arg#2 should be a file or None
-    #
-    #f = StringIO(moduleCodeDict[k])
-    #tmp = imp.load_module(k, f, k, (".py", "r", imp.PY_SOURCE))
-    tmp = imp.new_module(k)
-    exec(moduleCodeDict[k],tmp.__dict__)
-    setModuleName(tmp, k)
-    return tmp
+# def loadModuleString(moduleSource):
+#     # Below broken, imp doesn't believe its being passed a file:
+#     #    ValueError: load_module arg#2 should be a file or None
+#     #
+#     #f = StringIO(moduleCodeDict[k])
+#     #tmp = imp.load_module(k, f, k, (".py", "r", imp.PY_SOURCE))
+#     tmp = imp.new_module(k)
+#     exec(moduleCodeDict[k], tmp.__dict__)
+#     setModuleName(tmp, k)
+#     return tmp
 
 import py_compile
 
 def loadModuleFile(moduleName, filePath):
-    with open(filePath, 'r') as f:
-        return imp.load_module(moduleName, f, "%s.py" % moduleName, (".py", "r", imp.PY_SOURCE))
+    # imp has been deprecated
+    # with open(filePath, 'r') as f:
+    #     return imp.load_module(moduleName, f, "%s.py" % moduleName, (".py", "r", imp.PY_SOURCE))
+
+    spec = importlib.util.spec_from_file_location(moduleName, filePath)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    return module
 
 
 def readFile(path, root=""):
@@ -158,18 +167,18 @@ def readFile(path, root=""):
 
 # TODO: use these
 ERROR_HINT_MAP = {
-  'q1': {
-    "<type 'exceptions.IndexError'>": """
-      We noticed that your project threw an IndexError on q1.
-      While many things may cause this, it may have been from
-      assuming a certain number of successors from a state space
-      or assuming a certain number of actions available from a given
-      state. Try making your code more general (no hardcoded indices)
-      and submit again!
+    'q1': {
+        "<type 'exceptions.IndexError'>": """
+        We noticed that your project threw an IndexError on q1.
+        While many things may cause this, it may have been from
+        assuming a certain number of successors from a state space
+        or assuming a certain number of actions available from a given
+        state. Try making your code more general (no hardcoded indices)
+        and submit again!
     """
-  },
-  'q3': {
-      "<type 'exceptions.AttributeError'>": """
+    },
+    'q3': {
+        "<type 'exceptions.AttributeError'>": """
         We noticed that your project threw an AttributeError on q3.
         While many things may cause this, it may have been from assuming
         a certain size or structure to the state space. For example, if you have
@@ -178,7 +187,7 @@ ERROR_HINT_MAP = {
         making your code more general and submit again!
 
     """
-  }
+    }
 }
 
 import pprint
@@ -224,7 +233,7 @@ def runTest(testName, moduleDict, printTestCase=False, display=None):
         printTest(testDict, solutionDict)
 
     # This is a fragile hack to create a stub grades object
-    grades = grading.Grades(projectParams.PROJECT_NAME, [(None,0)])
+    grades = grading.Grades(projectParams.PROJECT_NAME, [(None, 0)])
     testCase.execute(grades, moduleDict, solutionDict)
 
 
@@ -241,6 +250,7 @@ def getDepends(testParser, testRoot, question):
 
 # get list of questions to grade
 def getTestSubdirs(testParser, testRoot, questionToGrade):
+    # THIS IS WHERE QUESTIONS ARE SPECIFIED
     problemDict = testParser.TestParser(os.path.join(testRoot, 'CONFIG')).parse()
     if questionToGrade != None:
         questions = getDepends(testParser, testRoot, questionToGrade)
@@ -255,7 +265,7 @@ def getTestSubdirs(testParser, testRoot, questionToGrade):
 # evaluate student code
 def evaluate(generateSolutions, testRoot, moduleDict, exceptionMap=ERROR_HINT_MAP,
              edxOutput=False, muteOutput=False, gsOutput=False,
-            printTestCase=False, questionToGrade=None, display=None):
+             printTestCase=False, questionToGrade=None, display=None):
     # imports of testbench code.  note that the testClasses import must follow
     # the import of student code due to dependencies
     import testParser
@@ -265,6 +275,7 @@ def evaluate(generateSolutions, testRoot, moduleDict, exceptionMap=ERROR_HINT_MA
 
     questions = []
     questionDicts = {}
+    # HERE IS WHERE QUESTIONS ARE CREATED
     test_subdirs = getTestSubdirs(testParser, testRoot, questionToGrade)
     for q in test_subdirs:
         subdir_path = os.path.join(testRoot, q)
@@ -278,8 +289,9 @@ def evaluate(generateSolutions, testRoot, moduleDict, exceptionMap=ERROR_HINT_MA
         questionDicts[q] = questionDict
 
         # load test cases into question
-        tests = list(filter(lambda t: re.match('[^#~.].*\.test\Z', t), os.listdir(subdir_path)))
-        tests = list(map(lambda t: re.match('(.*)\.test\Z', t).group(1), tests))
+        tests = [t for t in os.listdir(
+            subdir_path) if re.match(r'[^#~.].*\.test\Z', t)]
+        tests = [re.match(r'(.*)\.test\Z', t).group(1) for t in tests]
         for t in sorted(tests):
             test_file = os.path.join(subdir_path, '%s.test' % t)
             solution_file = os.path.join(subdir_path, '%s.solution' % t)
@@ -290,6 +302,7 @@ def evaluate(generateSolutions, testRoot, moduleDict, exceptionMap=ERROR_HINT_MA
             testDict['test_out_file'] = test_out_file
             testClass = getattr(projectTestClasses, testDict['class'])
             testCase = testClass(question, testDict)
+
             def makefun(testCase, solution_file):
                 if generateSolutions:
                     # write solution file to disk
@@ -317,9 +330,8 @@ def evaluate(generateSolutions, testRoot, moduleDict, exceptionMap=ERROR_HINT_MA
             for prereq in questionDicts[q].get('depends', '').split():
                 grades.addPrereq(q, prereq)
 
-    grades.grade(sys.modules[__name__], bonusPic = projectParams.BONUS_PIC)
+    grades.grade(sys.modules[__name__], bonusPic=projectParams.BONUS_PIC)
     return grades.points
-
 
 
 def getDisplay(graphicsByDefault, options=None):
@@ -341,7 +353,7 @@ import shutil
 def copy(srcDir, destDir, filename):
     srcFilename = os.path.join(srcDir, filename)
     destFilename = os.path.join(destDir, filename)
-    print("Copying %s -> %s" % (srcFilename, destFilename))
+    print("Copying {} -> {}".format(srcFilename, destFilename))
     shutil.copy(srcFilename, destFilename)
     # with open(os.path.join(srcDir, filename), 'r') as f1:
     #     with open(os.path.join(destDir, filename), 'w') as f2:
@@ -370,13 +382,13 @@ def generatePublicTests(moduleDict, privateRoot='private_test_cases', publicRoot
         questionClass = getattr(testClasses, questionDict['class'])
         question = questionClass(questionDict, getDisplay(False))
 
-        tests = list(filter(lambda t: re.match('[^#~.].*\.test\Z', t), os.listdir(private_subdir_path)))
-        tests = list(map(lambda t: re.match('(.*)\.test\Z', t).group(1), tests))
+        tests = list(filter(lambda t: re.match(r'[^#~.].*\.test\Z', t), os.listdir(private_subdir_path)))
+        tests = list(map(lambda t: re.match(r'(.*)\.test\Z', t).group(1), tests))
         for t in sorted(tests):
             test_file = os.path.join(private_subdir_path, '%s.test' % t)
             public_test_file = os.path.join(public_subdir_path, '%s.test' % t)
             test_out_file = os.path.join(public_subdir_path, '%s.test_output' % t)
-            print("Creating public test case %s from %s" % (public_test_file, test_file))
+            print("Creating public test case {} from {}".format(public_test_file, test_file))
 
             testDict = testParser.TestParser(test_file).parse()
             if testDict.get("disabled", "false").lower() == "true":
@@ -405,11 +417,12 @@ if __name__ == '__main__':
 
     moduleDict = {}
     for cp in codePaths:
-        moduleName = re.match('.*?([^/]*)\.py', cp).group(1)
+        moduleName = re.match(r'.*?([^/]*)\.py', cp).group(1)
         moduleDict[moduleName] = loadModuleFile(moduleName, os.path.join(options.codeRoot, cp))
-    moduleName = re.match('.*?([^/]*)\.py', options.testCaseCode).group(1)
+        
+    moduleName = re.match(r'.*?([^/]*)\.py', options.testCaseCode).group(1)
     moduleDict['projectTestClasses'] = loadModuleFile(moduleName, os.path.join(options.codeRoot, options.testCaseCode))
-
+    
     # BEGIN SOLUTION NO PROMPT
     if options.generatePublicTests:
         generatePublicTests(moduleDict)
@@ -420,6 +433,6 @@ if __name__ == '__main__':
         runTest(options.runTest, moduleDict, printTestCase=options.printTestCase, display=getDisplay(True, options))
     else:
         evaluate(options.generateSolutions, options.testRoot, moduleDict,
-            gsOutput=options.gsOutput,
-            edxOutput=options.edxOutput, muteOutput=options.muteOutput, printTestCase=options.printTestCase,
-            questionToGrade=options.gradeQuestion, display=getDisplay(options.gradeQuestion!=None, options))
+                 gsOutput=options.gsOutput,
+                 edxOutput=options.edxOutput, muteOutput=options.muteOutput, printTestCase=options.printTestCase,
+                 questionToGrade=options.gradeQuestion, display=getDisplay(options.gradeQuestion != None, options))
