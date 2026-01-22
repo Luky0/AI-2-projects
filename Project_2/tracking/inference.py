@@ -396,8 +396,15 @@ class ParticleFilter(InferenceModule):
         Sample each particle's next state based on its current state and the
         gameState.
         """
-        "*** YOUR CODE HERE ***"
-        raiseNotDefined()
+        newParticles = []
+        for oldPosition in self.particles:
+            # Get the distribution of new positions from old positions
+            newPositionDistribution = self.getPositionDistribution(gameState, oldPosition)
+            # Sample a new position from the distribution
+            newPosition = newPositionDistribution.sample()
+            newParticles.append(newPosition)
+
+        self.particles = newParticles
 
     def getBeliefDistribution(self):
         """
@@ -441,8 +448,16 @@ class JointParticleFilter(ParticleFilter):
         uniform prior.
         """
         self.particles = []
-        "*** YOUR CODE HERE ***"
-        raiseNotDefined()
+
+        # Get all possible permutations of ghost positions
+        permutations = list(itertools.product(self.legalPositions, repeat=self.numGhosts))
+
+        # Shuffle to ensure uniform distribution
+        random.shuffle(permutations)
+
+        # Distribute particles evenly across permutations
+        for i in range(self.numParticles):
+            self.particles.append(permutations[i % len(permutations)])
 
     def addGhostAgent(self, agent):
         """
@@ -474,8 +489,38 @@ class JointParticleFilter(ParticleFilter):
         be reinitialized by calling initializeUniformly. The total method of
         the DiscreteDistribution may be useful.
         """
-        "*** YOUR CODE HERE ***"
-        raiseNotDefined()
+        weights = DiscreteDistribution()
+        pacmanPosition = gameState.getPacmanPosition()
+
+        # Calculate weights for each particle
+        for particle in self.particles:
+            probability = 1.0
+
+            # Update probabilities for all ghosts
+            for i in range(self.numGhosts):
+                ghostPosition = particle[i]
+                jailPosition = self.getJailPosition(i)
+                noisyDistance = observation[i]
+                # Calculate probability
+                probability *= self.getObservationProb(noisyDistance, pacmanPosition, ghostPosition, jailPosition)
+
+            # Add the weight for this particle
+            weights[particle] += probability
+
+        # Handle the special case when all particles receive zero weight
+        if weights.total() == 0:
+            self.initializeUniformly(gameState)
+            return
+
+        weights.normalize()
+
+        # Resample particles based on the weights
+        newParticles = []
+        for _ in range(self.numParticles):
+            newParticle = weights.sample()
+            newParticles.append(newParticle)
+
+        self.particles = newParticles
 
     def elapseTime(self, gameState):
         """
@@ -484,11 +529,13 @@ class JointParticleFilter(ParticleFilter):
         """
         newParticles = []
         for oldParticle in self.particles:
-            newParticle = list(oldParticle)  # A list of ghost positions
+            newParticle = list(oldParticle)
 
-            # now loop through and update each entry in newParticle...
-            "*** YOUR CODE HERE ***"
-            raiseNotDefined()
+            for i in range(self.numGhosts):
+                # Get the distribution over new positions for ghost i
+                newPositionDistribution = self.getPositionDistribution(gameState, oldParticle, i, self.ghostAgents[i])
+                # Sample a new position from the distribution
+                newParticle[i] = newPositionDistribution.sample()
 
             """*** END YOUR CODE HERE ***"""
             newParticles.append(tuple(newParticle))
